@@ -1,0 +1,399 @@
+from pathlib import Path
+
+html = r'''<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f9a8d4">
+  <meta name="description" content="Một món quà nhỏ dành tặng Bông nhân ngày 20/10.">
+  <title>Chúc Mừng Ngày 20/10 Dành Cho Bông ❤️</title>
+
+  <!-- Các thư viện này cần Internet để tải -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --pink: #db2777;
+      --rose: #f43f5e;
+      --ink: #374151;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: 'Quicksand', sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 15%, rgba(255,255,255,.8), transparent 27rem),
+        linear-gradient(135deg, #fce7f3 0%, #fbcfe8 38%, #f9a8d4 72%, #fda4af 100%);
+    }
+
+    .font-handwriting { font-family: 'Dancing Script', cursive; }
+
+    .glass-card {
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .72);
+    }
+
+    .polaroid {
+      background: #fff;
+      padding: 10px 10px 18px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,.15), 0 8px 10px -6px rgba(0,0,0,.1);
+      transition: transform .35s ease, box-shadow .35s ease;
+      cursor: pointer;
+    }
+
+    .polaroid:hover, .polaroid:focus-visible {
+      transform: translateY(-7px) rotate(0deg) scale(1.025) !important;
+      box-shadow: 0 20px 30px -10px rgba(236,72,153,.32);
+      outline: none;
+    }
+
+    .photo-frame {
+      overflow: hidden;
+      border-radius: 5px;
+      background: #fce7f3;
+      aspect-ratio: 3 / 4;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transition: transform .5s ease;
+    }
+
+    .polaroid:hover .photo-frame img { transform: scale(1.06); }
+
+    .falling-petal {
+      position: fixed;
+      top: -10vh;
+      pointer-events: none;
+      z-index: 2;
+      user-select: none;
+      animation: fall linear forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes fall {
+      0% { transform: translate3d(0, -5vh, 0) rotate(0deg); opacity: 0; }
+      10% { opacity: .95; }
+      90% { opacity: .8; }
+      100% { transform: translate3d(45px, 110vh, 0) rotate(360deg); opacity: 0; }
+    }
+
+    .music-button {
+      box-shadow: 0 8px 25px rgba(190,24,93,.16);
+      transition: transform .2s ease;
+    }
+    .music-button:active { transform: scale(.96); }
+
+    .heart-pulse { animation: heartPulse 1.6s ease-in-out infinite; }
+    @keyframes heartPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.13); }
+    }
+
+    .soft-shadow { box-shadow: 0 18px 50px rgba(157,23,77,.13); }
+
+    #lightbox { transition: opacity .2s ease; }
+    #lightbox[hidden] { display: none !important; }
+
+    .photo-nav {
+      min-width: 48px;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      color: white;
+      transition: background .2s ease, transform .2s ease;
+    }
+    .photo-nav:hover { background: rgba(255,255,255,.32); transform: scale(1.05); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="relative pb-16">
+  <div id="petals-container" aria-hidden="true"></div>
+
+  <!-- Nút bật/tắt nhạc -->
+  <div class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40">
+    <button id="musicToggle" type="button"
+      class="music-button glass-card rounded-full text-pink-700 font-bold text-sm flex items-center gap-2 px-4 py-3"
+      aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">
+      <i id="musicIcon" class="fa-solid fa-music" aria-hidden="true"></i>
+      <span id="musicText">Bật nhạc</span>
+    </button>
+  </div>
+
+  <audio id="bgMusic" loop preload="none">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+  </audio>
+
+  <main class="max-w-5xl mx-auto px-4 pt-24 sm:pt-20 relative z-10">
+    <!-- Lời chào -->
+    <header class="text-center mb-10 sm:mb-12">
+      <div class="inline-block glass-card px-5 py-2 rounded-full text-pink-700 font-bold text-xs sm:text-sm tracking-wide uppercase mb-4 shadow-sm">
+        ✨ Happy Vietnamese Women's Day · 20/10 ✨
+      </div>
+
+      <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-rose-500 to-purple-600 font-handwriting py-2 leading-tight">
+        Chúc Mừng 20/10 Bông! 🌸
+      </h1>
+
+      <p class="text-gray-700 text-sm sm:text-base mt-3 max-w-xl mx-auto font-medium leading-relaxed">
+        Một món quà nho nhỏ, gửi Bông thật nhiều niềm vui, sự dịu dàng và những điều đáng yêu nhất trong ngày đặc biệt hôm nay. 💗
+      </p>
+
+      <div class="mt-5 text-pink-600 text-xl" aria-hidden="true">♡ ✿ ♡ ✿ ♡</div>
+    </header>
+
+    <!-- Bộ ảnh -->
+    <section class="mb-12" aria-labelledby="gallery-title">
+      <div class="text-center mb-7">
+        <h2 id="gallery-title" class="text-3xl sm:text-4xl font-bold text-pink-700 font-handwriting inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-camera-retro text-xl" aria-hidden="true"></i>
+          Khoảnh Khắc Đáng Yêu Của Bông
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-600 mt-2">Chạm vào từng tấm ảnh để xem lớn hơn nha! 📸</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 px-1 sm:px-2">
+        <button class="polaroid -rotate-3 text-left" type="button" data-photo="0" aria-label="Xem ảnh Bông 1">
+          <div class="photo-frame">
+            <img src="Bong1.jpg" alt="Khoảnh khắc của Bông 1" loading="eager">
+          </div>
+          <p class="text-center font-handwriting text-pink-700 font-bold text-xl mt-3">Dịu dàng &amp; Rạng rỡ ✨</p>
+        </button>
+
+        <button class="polaroid rotate-2 mt-3 md:mt-0 text-left" type="button" data-photo="1" aria-label="Xem ảnh Bông 2">
+          <div class="photo-frame">
+            <img src="Bong2.jpg" alt="Khoảnh khắc của Bông 2" loading="lazy">
+          </div>
+          <p class="text-center font-handwriting text-pink-700 font-bold text-xl mt-3">Nụ cười đáng yêu 😊</p>
+        </button>
+
+        <button class="polaroid -rotate-2 text-left" type="button" data-photo="2" aria-label="Xem ảnh Bông 3">
+          <div class="photo-frame">
+            <img src="Bong3.jpg" alt="Khoảnh khắc của Bông 3" loading="lazy">
+          </div>
+          <p class="text-center font-handwriting text-pink-700 font-bold text-xl mt-3">Xinh xắn hết nấc 🌷</p>
+        </button>
+
+        <button class="polaroid rotate-3 mt-3 md:mt-0 text-left" type="button" data-photo="3" aria-label="Xem ảnh Bông 4">
+          <div class="photo-frame">
+            <img src="Bong4.jpg" alt="Khoảnh khắc của Bông 4" loading="lazy">
+          </div>
+          <p class="text-center font-handwriting text-pink-700 font-bold text-xl mt-3">Luôn là chính mình 💖</p>
+        </button>
+      </div>
+      <p class="text-center text-xs text-gray-600 mt-5">Bốn tấm ảnh, bốn khoảnh khắc, mong Bông sẽ luôn vui vẻ như thế. ♡</p>
+    </section>
+
+    <!-- Thiệp chúc mừng -->
+    <section class="glass-card rounded-3xl p-5 sm:p-8 md:p-10 soft-shadow max-w-2xl mx-auto relative overflow-hidden mb-10">
+      <div class="absolute -top-12 -right-12 w-44 h-44 bg-pink-300 rounded-full blur-3xl opacity-50" aria-hidden="true"></div>
+      <div class="absolute -bottom-14 -left-12 w-40 h-40 bg-rose-200 rounded-full blur-3xl opacity-50" aria-hidden="true"></div>
+
+      <div class="relative z-10 text-center">
+        <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner heart-pulse">
+          <i class="fa-solid fa-heart" aria-hidden="true"></i>
+        </div>
+
+        <p class="font-handwriting text-pink-600 text-2xl sm:text-3xl mb-1">Một chút yêu thương gửi đến Bông</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-5">Lời Chúc Ngày 20/10 💌</h2>
+
+        <div class="text-gray-700 leading-relaxed text-base sm:text-lg font-medium bg-white/70 p-5 sm:p-6 rounded-2xl border border-pink-100 text-left">
+          Chúc Bông ngày 20/10 thật nhiều niềm vui, luôn rạng rỡ và tràn đầy năng lượng tích cực! Mong Bông sẽ luôn gặp những điều tốt đẹp, học tập thật tốt, làm được những điều mình yêu thích và có thật nhiều khoảnh khắc đáng nhớ. Dù là ngày đặc biệt hay những ngày bình thường, mong Bông vẫn luôn có lý do để mỉm cười nhé! ✨💖
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-pink-200/70 flex justify-between items-center gap-3 text-sm">
+          <span class="text-gray-500">Người gửi:</span>
+          <span class="font-bold text-pink-600 font-handwriting text-3xl">Hoàng ♡</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nút pháo hoa -->
+    <section class="text-center mb-8">
+      <button id="confettiButton" type="button"
+        class="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3 px-7 sm:px-8 rounded-full shadow-lg hover:shadow-pink-300/50 hover:scale-105 active:scale-95 transition inline-flex items-center justify-center gap-2">
+        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+        Bắn Pháo Hoa Ăn Mừng 🎉
+      </button>
+      <p class="text-pink-800/80 text-xs mt-4">Chúc Bông có một ngày 20/10 thật đáng nhớ! 🌸</p>
+    </section>
+
+    <footer class="text-center text-pink-800/70 text-xs sm:text-sm font-medium">
+      Làm bằng một chút thời gian và thật nhiều sự chân thành ♡
+    </footer>
+  </main>
+
+  <!-- Lightbox xem ảnh -->
+  <div id="lightbox" hidden class="fixed inset-0 bg-black/90 z-50 flex-col items-center justify-center p-4"
+       role="dialog" aria-modal="true" aria-label="Xem ảnh lớn">
+    <button id="closeLightbox" type="button" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-3xl p-2 hover:text-pink-300" aria-label="Đóng ảnh">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+
+    <div class="w-full max-w-3xl flex flex-col items-center">
+      <img id="lightboxImg" src="" alt="" class="max-w-full rounded-xl shadow-2xl object-contain" style="max-height:72vh">
+      <p id="lightboxCaption" class="text-white text-center font-handwriting text-3xl mt-4"></p>
+      <div class="flex gap-5 sm:gap-8 mt-5">
+        <button id="prevPhoto" type="button" class="photo-nav text-2xl" aria-label="Ảnh trước"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+        <button id="nextPhoto" type="button" class="photo-nav text-2xl" aria-label="Ảnh tiếp theo"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    const photos = [
+      { src: "Bong1.jpg", caption: "Dịu dàng & Rạng rỡ ✨" },
+      { src: "Bong2.jpg", caption: "Nụ cười đáng yêu 😊" },
+      { src: "Bong3.jpg", caption: "Xinh xắn hết nấc 🌷" },
+      { src: "Bong4.jpg", caption: "Luôn là chính mình 💖" }
+    ];
+
+    const musicBtn = document.getElementById("musicToggle");
+    const bgMusic = document.getElementById("bgMusic");
+    const musicText = document.getElementById("musicText");
+    const musicIcon = document.getElementById("musicIcon");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    let currentPhotoIdx = 0;
+    let previousFocus = null;
+
+    // Nhạc chỉ phát sau khi người xem bấm nút.
+    musicBtn.addEventListener("click", async () => {
+      if (!bgMusic.paused) {
+        bgMusic.pause();
+        musicText.textContent = "Bật nhạc";
+        musicIcon.className = "fa-solid fa-music";
+        musicBtn.setAttribute("aria-pressed", "false");
+        return;
+      }
+
+      try {
+        await bgMusic.play();
+        musicText.textContent = "Tắt nhạc";
+        musicIcon.className = "fa-solid fa-compact-disc";
+        musicBtn.setAttribute("aria-pressed", "true");
+      } catch (error) {
+        musicText.textContent = "Thử lại";
+        console.warn("Không thể phát nhạc. Hãy kiểm tra kết nối hoặc nguồn âm thanh.", error);
+      }
+    });
+
+    function fireConfetti() {
+      if (typeof confetti !== "function") return;
+      confetti({
+        particleCount: 110,
+        spread: 75,
+        startVelocity: 38,
+        origin: { y: 0.62 },
+        colors: ["#ec4899", "#f43f5e", "#f9a8d4", "#fbbf24", "#c084fc"]
+      });
+    }
+
+    function openLightbox(index) {
+      currentPhotoIdx = (index + photos.length) % photos.length;
+      previousFocus = document.activeElement;
+      updateLightboxPhoto();
+      lightbox.hidden = false;
+      lightbox.classList.add("flex");
+      document.body.style.overflow = "hidden";
+      document.getElementById("closeLightbox").focus();
+      fireConfetti();
+    }
+
+    function closeLightbox() {
+      lightbox.hidden = true;
+      lightbox.classList.remove("flex");
+      document.body.style.overflow = "";
+      if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+    }
+
+    function updateLightboxPhoto() {
+      const photo = photos[currentPhotoIdx];
+      lightboxImg.src = photo.src;
+      lightboxImg.alt = photo.caption;
+      lightboxCaption.textContent = photo.caption;
+    }
+
+    function changePhoto(direction) {
+      currentPhotoIdx = (currentPhotoIdx + direction + photos.length) % photos.length;
+      updateLightboxPhoto();
+    }
+
+    document.querySelectorAll("[data-photo]").forEach((button) => {
+      button.addEventListener("click", () => openLightbox(Number(button.dataset.photo)));
+    });
+
+    document.getElementById("closeLightbox").addEventListener("click", closeLightbox);
+    document.getElementById("prevPhoto").addEventListener("click", () => changePhoto(-1));
+    document.getElementById("nextPhoto").addEventListener("click", () => changePhoto(1));
+    document.getElementById("confettiButton").addEventListener("click", fireConfetti);
+
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (lightbox.hidden) return;
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowLeft") changePhoto(-1);
+      if (event.key === "ArrowRight") changePhoto(1);
+    });
+
+    // Hoa rơi nhẹ, tự dọn phần tử để không tạo quá nhiều DOM.
+    function createPetal() {
+      const container = document.getElementById("petals-container");
+      const icons = ["🌸", "🌺", "✨", "💖", "🌷"];
+      const petal = document.createElement("span");
+      petal.className = "falling-petal";
+      petal.textContent = icons[Math.floor(Math.random() * icons.length)];
+      petal.style.left = Math.random() * 100 + "vw";
+      petal.style.fontSize = (14 + Math.random() * 12) + "px";
+      petal.style.animationDuration = (7 + Math.random() * 6) + "s";
+      container.appendChild(petal);
+      petal.addEventListener("animationend", () => petal.remove(), { once: true });
+    }
+
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => createPetal(), i * 350);
+    }
+    setInterval(createPetal, 900);
+  </script>
+</body>
+</html>
+'''
+
+out = Path("/mnt/data/index.html")
+out.write_text(html, encoding="utf-8")
+print(f"Đã tạo file: {out}")
+print(f"Kích thước: {out.stat().st_size:,} bytes")
